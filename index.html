@@ -3,1540 +3,855 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Supermarket Receipt Generator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <title>MG Mysterious Warehouse</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --success-color: #27ae60;
-            --danger-color: #e74c3c;
-            --warning-color: #f39c12;
-            --light-color: #ecf0f1;
-            --dark-color: #34495e;
-        }
-        
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
+        :root {
+            --primary-bg: #0a0a0a;
+            --secondary-bg: #121212;
+            --accent-color: #ff6600;
+            --text-color: #f0f0f0;
+            --disabled-color: #444;
+            --card-bg: #1a1a1a;
+            --border-color: #333;
+        }
+        
         body {
-            background: linear-gradient(135deg, #f5f7fa, #e4e7eb);
-            padding: 20px;
-            color: var(--dark-color);
+            background-color: var(--primary-bg);
+            color: var(--text-color);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 102, 0, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 102, 0, 0.05) 0%, transparent 20%);
         }
         
         .container {
             display: flex;
-            max-width: 1600px;
-            margin: 0 auto;
-            gap: 30px;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
-            border-radius: 15px;
+            flex: 1;
+        }
+        
+        /* Header Styles */
+        header {
+            background-color: var(--secondary-bg);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent-color);
+            box-shadow: 0 4px 12px rgba(255, 102, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+        
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 102, 0, 0.4);
+            position: relative;
+        }
+        
+        .logo::after {
+            content: 'WAREHOUSE';
+            position: absolute;
+            bottom: -15px;
+            left: 0;
+            font-size: 0.8rem;
+            color: #888;
+            letter-spacing: 4px;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .language-selector {
+            position: relative;
+        }
+        
+        .language-btn {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .language-btn:hover {
+            border-color: var(--accent-color);
+        }
+        
+        .activate-btn {
+            background: linear-gradient(135deg, #ff6600, #ff8c00);
+            color: black;
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(255, 102, 0, 0.3);
+            position: relative;
             overflow: hidden;
-            background: white;
         }
         
-        .control-panel {
-            flex: 1;
-            background: white;
-            padding: 25px;
-            max-width: 600px;
-            border-right: 1px solid #eee;
-            overflow-y: auto;
-            max-height: 95vh;
+        .activate-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.3) 50%,
+                rgba(255,255,255,0) 100%
+            );
+            transform: rotate(30deg);
+            transition: all 0.6s;
         }
         
-        .preview-panel {
-            flex: 1;
+        .activate-btn:hover::before {
+            left: 100%;
+        }
+        
+        .activate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 102, 0, 0.5);
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            background-color: var(--secondary-bg);
+            padding: 20px 0;
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 25px;
-            background: #f9fafc;
+            position: relative;
+            z-index: 5;
         }
         
-        .panel-title {
-            font-size: 1.6rem;
-            margin-bottom: 25px;
-            padding-bottom: 12px;
-            border-bottom: 3px solid var(--secondary-color);
-            color: var(--primary-color);
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, var(--accent-color), transparent);
+            opacity: 0.3;
+        }
+        
+        .sidebar-item {
+            padding: 18px 30px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 1.1rem;
             display: flex;
             align-items: center;
-        }
-        
-        .panel-title i {
-            margin-right: 10px;
-            color: var(--secondary-color);
-        }
-        
-        .form-group {
-            margin-bottom: 18px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            color: #444;
-        }
-        
-        input, select, textarea, button {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
+            gap: 15px;
             transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            position: relative;
         }
         
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-            outline: none;
+        .sidebar-item:hover:not(.disabled) {
+            background-color: var(--card-bg);
+            border-left: 4px solid var(--accent-color);
         }
         
-        button {
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
+        .sidebar-item.active {
+            background-color: var(--card-bg);
+            border-left: 4px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+        
+        .disabled {
+            color: var(--disabled-color);
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
+        .enabled {
+            color: var(--accent-color);
             cursor: pointer;
-            font-weight: 600;
+        }
+        
+        .enabled:hover {
+            color: #ff8c00;
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .intro-container {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .intro-title {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 25px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .intro-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 4px;
+            background: var(--accent-color);
+            border-radius: 2px;
+        }
+        
+        .intro-text {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            text-align: justify;
+            position: relative;
+        }
+        
+        .intro-text::first-letter {
+            font-size: 3rem;
+            color: var(--accent-color);
+            float: left;
+            line-height: 0.8;
+            margin-right: 8px;
+        }
+        
+        .history-timeline {
+            margin-top: 40px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding: 20px 0 20px 40px;
+            border-left: 3px solid var(--accent-color);
+            margin-bottom: 20px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 24px;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+        }
+        
+        .timeline-year {
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
             transition: all 0.3s ease;
-            margin-top: 8px;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background-color: var(--secondary-bg);
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 0 30px rgba(255, 102, 0, 0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+            border: 1px solid var(--accent-color);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(26, 26, 26, 0.8);
+        }
+        
+        .modal-title {
+            color: var(--accent-color);
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            border-radius: 50%;
         }
         
-        button:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        .close-btn:hover {
+            color: var(--accent-color);
+            background: rgba(255,102,0,0.1);
         }
         
-        .btn-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 25px;
-            flex-wrap: wrap;
+        .modal-body {
+            padding: 30px;
         }
         
-        .btn-group button {
-            flex: 1;
-            min-width: 120px;
+        .input-group {
+            margin-bottom: 25px;
         }
         
-        .btn-download {
-            background-color: var(--success-color);
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: #aaa;
         }
         
-        .btn-print {
-            background-color: var(--warning-color);
-        }
-        
-        .btn-update {
-            background-color: var(--primary-color);
-        }
-        
-        .btn-random {
-            background-color: #9b59b6;
-        }
-        
-        .btn-random-all {
-            background-color: #e67e22;
-            margin-bottom: 20px;
-            font-size: 1.1rem;
+        .activation-input {
+            width: 100%;
             padding: 14px;
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-family: monospace;
+        }
+        
+        .activation-input:focus {
+            border-color: var(--accent-color);
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 102, 0, 0.3);
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #ff6600, #ff8c00);
+            color: black;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: 0.5s;
+        }
+        
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4);
+        }
+        
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.1rem;
+            min-height: 25px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .success {
+            color: #4caf50;
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
         }
         
         .error {
-            color: var(--danger-color);
-            font-size: 0.85rem;
-            margin-top: 5px;
-            display: none;
+            color: #f44336;
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
         }
         
-        .receipt-container {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            min-width: 300px;
-            max-width: 100%;
-            transition: all 0.3s ease;
+        .tool-modal {
+            max-width: 900px;
+            height: 80vh;
+            width: 90%;
         }
         
-        .receipt {
-            width: 240px;
-            background: white;
-            padding: 15px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.08);
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            line-height: 1.4;
-            transition: all 0.3s ease;
-            color: #000;
-            word-break: break-word;
-        }
-        
-        /* Receipt Styles */
-        .receipt.style1 {
-            font-family: 'Courier New', monospace;
-        }
-        
-        .receipt.style2 {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-        }
-        
-        .receipt.style3 {
-            font-family: 'Times New Roman', serif;
-            border: 1px dashed #ccc;
-        }
-        
-        .receipt.style4 {
-            font-family: Verdana, sans-serif;
-            background-color: #f8f8f8;
-        }
-        
-        .receipt.style5 {
-            font-family: Georgia, serif;
-            border-left: 3px solid #3498db;
-            border-right: 3px solid #3498db;
-        }
-        
-        .receipt.style6 {
-            font-family: 'Trebuchet MS', sans-serif;
-            padding: 10px;
-            border: 2px solid #e74c3c;
-        }
-        
-        .receipt.style7 {
-            font-family: 'Gill Sans', sans-serif;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-        }
-        
-        .receipt.style8 {
-            font-family: 'Century Gothic', sans-serif;
-            border-radius: 0;
-        }
-        
-        .receipt.style9 {
-            font-family: 'Palatino Linotype', serif;
-            border-top: 3px solid #27ae60;
-            border-bottom: 3px solid #27ae60;
-        }
-        
-        .receipt.style10 {
-            font-family: 'Lucida Sans', sans-serif;
-            background-color: #fffaf0;
-        }
-        
-        .receipt-header {
-            text-align: center;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px dashed #ccc;
-        }
-        
-        .store-logo {
-            max-width: 80px;
-            max-height: 40px;
-            margin: 0 auto 8px;
-            display: block;
-        }
-        
-        .store-name {
-            font-weight: bold;
-            margin-bottom: 4px;
-            letter-spacing: 0.5px;
-            font-size: 1.1em;
-        }
-        
-        .store-address {
-            margin-bottom: 4px;
-            line-height: 1.3;
-            font-size: 0.9em;
-        }
-        
-        .gstin {
-            font-weight: bold;
-            margin-bottom: 4px;
-            font-size: 0.9em;
-        }
-        
-        .receipt-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 0.9em;
-        }
-        
-        .items-table {
+        .tool-iframe {
             width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 12px;
-            table-layout: fixed;
-        }
-        
-        .items-table th {
-            text-align: left;
-            padding-bottom: 6px;
-            border-bottom: 1px dashed #ccc;
-            font-weight: bold;
-        }
-        
-        .items-table td {
-            padding: 3px 0;
-            border-bottom: 1px dashed #eee;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .items-table .align-right {
-            text-align: right;
-        }
-        
-        .tax-details {
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1px dashed #ccc;
-            font-size: 0.9em;
-        }
-        
-        .total-amount {
-            font-weight: bold;
-            text-align: right;
-            margin: 15px 0;
-            padding-top: 10px;
-            border-top: 2px solid #000;
-        }
-        
-        .total-amount.highlight {
-            font-size: 1.4em;
-            font-weight: 900;
-        }
-        
-        .payment-details {
-            margin-bottom: 15px;
-            line-height: 1.4;
-            font-size: 0.9em;
-        }
-        
-        .payment-success {
-            color: #000;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-        
-        .barcode-container {
-            margin-top: 15px;
-            text-align: center;
-            max-width: 100%;
-            overflow: hidden;
-        }
-        
-        .barcode {
-            height: 25px;
-            margin-bottom: 5px;
-        }
-        
-        .thank-you {
-            text-align: center;
-            margin-top: 15px;
-            font-style: italic;
-            color: #666;
-            font-size: 0.9em;
-        }
-        
-        .section {
-            background: #f9f9f9;
-            padding: 18px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            border-left: 4px solid var(--secondary-color);
-        }
-        
-        .section-title {
-            font-size: 1.25rem;
-            margin-bottom: 18px;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .section-title i {
-            color: var(--secondary-color);
-        }
-        
-        .random-options {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        
-        .random-options input {
-            flex: 1;
-        }
-        
-        .form-row {
-            display: flex;
-            gap: 15px;
-        }
-        
-        .form-row .form-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-        
-        .logo-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .logo-actions button {
-            margin-top: 0;
-            padding: 10px;
-        }
-        
-        .items-editor {
-            margin-top: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            background: white;
-        }
-        
-        .item-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            align-items: center;
-        }
-        
-        .item-row input {
-            padding: 10px;
-        }
-        
-        .item-name {
-            flex: 4;
-            min-width: 150px;
-        }
-        
-        .item-qty {
-            flex: 1;
-            max-width: 70px;
-        }
-        
-        .item-price {
-            flex: 1;
-            max-width: 100px;
-        }
-        
-        .item-total {
-            flex: 1;
-            max-width: 100px;
-            text-align: right;
-            padding: 10px;
-            background: #f9f9f9;
-            border-radius: 4px;
-        }
-        
-        .item-actions {
-            flex: 0.5;
-            max-width: 40px;
-        }
-        
-        .delete-item {
-            background: #e74c3c;
-            color: white;
+            height: calc(100% - 60px);
             border: none;
-            border-radius: 4px;
-            padding: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            border-radius: 0 0 10px 10px;
+            background: #0a0a0a;
         }
         
-        .delete-item:hover {
-            background: #c0392b;
+        /* Footer */
+        footer {
+            background-color: var(--secondary-bg);
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--disabled-color);
+            position: relative;
+            z-index: 2;
         }
         
-        .add-item-btn {
-            background: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 10px;
+        footer::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--accent-color), transparent);
         }
         
-        .add-item-btn:hover {
-            background: #219653;
-        }
-        
-        .barcode-toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .editor-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .editor-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-        
-        .settings-group {
-            background: #f0f8ff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border: 1px solid #d1e7ff;
-        }
-        
-        @media (max-width: 1200px) {
+        /* Responsive Design */
+        @media (max-width: 900px) {
             .container {
                 flex-direction: column;
             }
             
-            .control-panel {
-                max-width: 100%;
+            .sidebar {
+                width: 100%;
                 border-right: none;
-                border-bottom: 1px solid #eee;
+                border-bottom: 1px solid var(--border-color);
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 0;
             }
             
-            .preview-panel {
-                padding: 20px 10px;
+            .sidebar::before {
+                width: 100%;
+                height: 2px;
+                background: linear-gradient(to right, transparent, var(--accent-color), transparent);
+                top: auto;
+                bottom: 0;
+            }
+            
+            .sidebar-item {
+                padding: 15px 20px;
+                white-space: nowrap;
+                border-left: none;
+                border-bottom: 4px solid transparent;
+            }
+            
+            .sidebar-item:hover:not(.disabled) {
+                border-left: none;
+                border-bottom: 4px solid var(--accent-color);
+            }
+            
+            .sidebar-item.active {
+                border-left: none;
+                border-bottom: 4px solid var(--accent-color);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .header-controls {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .intro-title {
+                font-size: 2rem;
+            }
+            
+            .logo {
+                font-size: 1.8rem;
+            }
+            
+            .logo::after {
+                font-size: 0.7rem;
+                bottom: -12px;
+            }
+        }
+        
+        /* Glowing effects */
+        .glow {
+            text-shadow: 0 0 10px rgba(255, 102, 0, 0.7);
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 102, 0, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 102, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 102, 0, 0);
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="control-panel">
-            <h1 class="panel-title"><i class="fas fa-shopping-cart"></i> Enhanced Supermarket Receipt Generator</h1>
-            
-            <button class="btn-random btn-random-all" onclick="randomizeAll()">
-                <i class="fas fa-random"></i> Generate Random Data
+    <!-- Header with logo and controls -->
+    <header>
+        <div class="logo">MG MYSTERIOUS</div>
+        <div class="header-controls">
+            <div class="language-selector">
+                <button class="language-btn">
+                    <i class="fas fa-globe"></i> English
+                </button>
+            </div>
+            <button class="activate-btn pulse" id="activateBtn">
+                <i class="fas fa-key"></i> Activate Tools
             </button>
-            
-            <div class="section">
-                <h2 class="section-title"><i class="fas fa-store"></i> Store Information</h2>
-                <div class="form-group">
-                    <label for="storeName">Store Name</label>
-                    <input type="text" id="storeName" placeholder="Enter store name">
-                    <button class="btn-random" onclick="randomStoreName()">
-                        <i class="fas fa-dice"></i> Random Store Name
-                    </button>
-                </div>
-                
-                <div class="form-group">
-                    <label for="storeCity">City</label>
-                    <select id="storeCity">
-                        <option value="Pune">Pune</option>
-                        <option value="Ahmedabad">Ahmedabad</option>
-                        <option value="Gurgaon">Gurgaon</option>
-                        <option value="Mumbai">Mumbai</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="storeAddress">Address</label>
-                    <textarea id="storeAddress" rows="3" placeholder="Store address"></textarea>
-                    <button class="btn-random" onclick="randomAddress()">
-                        <i class="fas fa-dice"></i> Random Address
-                    </button>
-                </div>
-                
-                <div class="form-group">
-                    <label for="gstin">GSTIN</label>
-                    <div class="form-row">
-                        <input type="text" id="gstin" placeholder="GSTIN">
-                        <button class="btn-random" onclick="randomGSTIN()">
-                            <i class="fas fa-dice"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Store Logo</label>
-                    <input type="file" id="logoUpload" accept="image/*">
-                    <div class="logo-actions">
-                        <button class="btn-random" onclick="randomLogo()">
-                            <i class="fas fa-dice"></i> Random Logo
-                        </button>
-                        <button onclick="removeLogo()">
-                            <i class="fas fa-times"></i> Remove Logo
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2 class="section-title"><i class="fas fa-receipt"></i> Receipt Details</h2>
-                <div class="form-group">
-                    <label for="receiptNumber">Receipt Number</label>
-                    <input type="text" id="receiptNumber" placeholder="Receipt number">
-                    <button class="btn-random" onclick="randomReceiptNumber()">
-                        <i class="fas fa-dice"></i> Random
-                    </button>
-                </div>
-                
-                <div class="form-group">
-                    <label for="transactionDate">Transaction Date & Time</label>
-                    <input type="datetime-local" id="transactionDate">
-                    <button class="btn-random" onclick="randomRecentTime()">
-                        <i class="fas fa-dice"></i> Random Time
-                    </button>
-                </div>
-                
-                <div class="form-group">
-                    <label for="cashierName">Cashier Name</label>
-                    <input type="text" id="cashierName" placeholder="Cashier name">
-                    <button class="btn-random" onclick="randomCashierName()">
-                        <i class="fas fa-dice"></i> Random Cashier
-                    </button>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2 class="section-title"><i class="fas fa-percent"></i> Tax Rates</h2>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="cgstRate">CGST Rate (%)</label>
-                        <input type="number" id="cgstRate" value="9" min="0" max="30" step="0.1">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="sgstRate">SGST Rate (%)</label>
-                        <input type="number" id="sgstRate" value="9" min="0" max="30" step="0.1">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2 class="section-title"><i class="fas fa-shopping-basket"></i> Items & Pricing</h2>
-                <div class="form-group">
-                    <label>Generate Random Items</label>
-                    <div class="random-options">
-                        <input type="number" id="foodItems" placeholder="Food" min="0" value="2">
-                        <input type="number" id="drinkItems" placeholder="Drinks" min="0" value="1">
-                        <input type="number" id="snackItems" placeholder="Snacks" min="0" value="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="targetAmount">Target Amount (₹)</label>
-                        <input type="number" id="targetAmount" placeholder="Target amount" value="500">
-                    </div>
-                    <button class="btn-random" onclick="generateRandomItems()">
-                        <i class="fas fa-dice"></i> Generate Items
-                    </button>
-                </div>
-                
-                <div class="items-editor">
-                    <div class="editor-header">
-                        <div class="editor-title">Edit Items</div>
-                        <div class="subtotal-display">Subtotal: ₹<span id="subtotalAmount">0.00</span></div>
-                    </div>
-                    <div id="itemsEditorContainer">
-                        <!-- Item rows will be added here -->
-                    </div>
-                    <button class="add-item-btn" onclick="addNewItem()">
-                        <i class="fas fa-plus"></i> Add New Item
-                    </button>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2 class="section-title"><i class="fas fa-credit-card"></i> Payment Method</h2>
-                <div class="form-group">
-                    <label>Payment Type</label>
-                    <div>
-                        <input type="radio" id="cash" name="paymentType" value="cash">
-                        <label for="cash" style="display:inline">Cash</label>
-                        
-                        <input type="radio" id="credit" name="paymentType" value="credit" checked style="margin-left:20px">
-                        <label for="credit" style="display:inline">Credit Card</label>
-                    </div>
-                </div>
-                
-                <div id="cashPayment" style="display:none">
-                    <div class="form-group">
-                        <label for="cashAmount">Cash Received (₹)</label>
-                        <input type="number" id="cashAmount" placeholder="Amount received">
-                        <div id="cashError" class="error">Change amount is negative!</div>
-                    </div>
-                </div>
-                
-                <div id="cardPayment">
-                    <div class="form-group">
-                        <label for="cardNumber">Last 4 Digits of Card</label>
-                        <input type="text" id="cardNumber" maxlength="4" value="3357">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2 class="section-title"><i class="fas fa-print"></i> Print Settings</h2>
-                
-                <div class="form-group">
-                    <label for="paperSize">Paper Size</label>
-                    <select id="paperSize">
-                        <option value="58mm">58mm Paper</option>
-                        <option value="80mm">80mm Paper</option>
-                    </select>
-                </div>
-                
-                <!-- NEW: Receipt Style Selector -->
-                <div class="form-group">
-                    <label for="receiptStyle">Receipt Style</label>
-                    <select id="receiptStyle">
-                        <option value="style1">Style 1 (Classic)</option>
-                        <option value="style2">Style 2 (Modern)</option>
-                        <option value="style3">Style 3 (Elegant)</option>
-                        <option value="style4">Style 4 (Minimalist)</option>
-                        <option value="style5">Style 5 (Professional)</option>
-                        <option value="style6">Style 6 (Bold)</option>
-                        <option value="style7">Style 7 (Clean)</option>
-                        <option value="style8">Style 8 (Corporate)</option>
-                        <option value="style9">Style 9 (Distinctive)</option>
-                        <option value="style10">Style 10 (Stylish)</option>
-                    </select>
-                </div>
-                
-                <div class="settings-group">
-                    <h3 class="section-title" style="font-size: 1.1rem; margin-bottom: 12px;">
-                        <i class="fas fa-cog"></i> Receipt Content Settings
-                    </h3>
-                    
-                    <div class="form-group">
-                        <div class="barcode-toggle">
-                            <input type="checkbox" id="showTotalColumn" checked>
-                            <label for="showTotalColumn">Show Total Column (Qty × Price)</label>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="paymentStatus">Payment Status Description</label>
-                        <select id="paymentStatus">
-                            <option value="Payment Successful">Payment Successful</option>
-                            <option value="Transaction Completed">Transaction Completed</option>
-                            <option value="Payment Confirmed">Payment Confirmed</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="welcomeMessage">Welcome Message</label>
-                        <select id="welcomeMessage">
-                            <option value="Thank you for your patronage! Please visit again.">Thank you for your patronage! Please visit again.</option>
-                            <option value="Thanks for shopping with us, see you next time!">Thanks for shopping with us, see you next time!</option>
-                            <option value="Thank you for choosing us, have a great day!">Thank you for choosing us, have a great day!</option>
-                            <option value="Happy shopping! Come again soon.">Happy shopping! Come again soon.</option>
-                            <option value="We appreciate your support, looking forward to serving you again.">We appreciate your support, looking forward to serving you again.</option>
-                            <option value="Your satisfaction is our motivation, welcome back!">Your satisfaction is our motivation, welcome back!</option>
-                            <option value="Thank you for your trust, wish you a pleasant day!">Thank you for your trust, wish you a pleasant day!</option>
-                            <option value="Quality service, sincere companionship, welcome back!">Quality service, sincere companionship, welcome back!</option>
-                            <option value="Thanks for shopping, looking forward to seeing you again!">Thanks for shopping, looking forward to seeing you again!</option>
-                            <option value="Customer first, service foremost, welcome back!">Customer first, service foremost, welcome back!</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="fontSize">Font Size</label>
-                        <select id="fontSize">
-                            <option value="10">Small (10px)</option>
-                            <option value="12">Medium (12px)</option>
-                            <option value="14" selected>Standard (14px)</option>
-                            <option value="16">Large (16px)</option>
-                            <option value="18">Extra Large (18px)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="resolution">Output Resolution</label>
-                        <select id="resolution">
-                            <option value="1">Normal (1x)</option>
-                            <option value="2" selected>High (2x)</option>
-                            <option value="3">Ultra (3x)</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="barcode-toggle">
-                    <input type="checkbox" id="barcodeToggle" checked>
-                    <label for="barcodeToggle">Show Barcode</label>
-                </div>
-            </div>
-            
-            <div class="btn-group">
-                <button class="btn-update" onclick="updateReceipt()">
-                    <i class="fas fa-sync"></i> Update Receipt
-                </button>
-                <button class="btn-download" onclick="downloadPDF()">
-                    <i class="fas fa-file-pdf"></i> PDF
-                </button>
-                <button class="btn-download" onclick="downloadJPG()">
-                    <i class="fas fa-file-image"></i> JPG
-                </button>
-                <button class="btn-download" onclick="downloadPNG()">
-                    <i class="fas fa-image"></i> PNG
-                </button>
-                <button class="btn-print" onclick="printReceipt()">
-                    <i class="fas fa-print"></i> Print
-                </button>
-            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <a href="#" class="sidebar-item active">
+                <i class="fas fa-info-circle"></i> Introduction
+            </a>
+            <a href="#" class="sidebar-item disabled" id="restaurantTool">
+                <i class="fas fa-utensils"></i> Restaurant Receipt Generator
+            </a>
+            <a href="#" class="sidebar-item disabled" id="supermarketTool">
+                <i class="fas fa-shopping-cart"></i> Supermarket Receipt Generator
+            </a>
+            <a href="#" class="sidebar-item disabled" id="hotelTool">
+                <i class="fas fa-hotel"></i> Hotel Invoice Generator
+            </a>
+            <a href="#" class="sidebar-item disabled" id="vpnTool">
+                <i class="fas fa-shield-alt"></i> VPN Invoice Generator
+            </a>
         </div>
         
-        <div class="preview-panel">
-            <h2 class="panel-title"><i class="fas fa-eye"></i> Receipt Preview</h2>
-            <div class="receipt-container">
-                <div class="receipt style1" id="receipt">
-                    <div class="receipt-header">
-                        <img id="storeLogo" class="store-logo" src="" alt="Store Logo">
-                        <div id="storeNameDisplay" class="store-name">Mumbai Supermarket</div>
-                        <div id="storeAddressDisplay" class="store-address">Shop 12, Laxmi Road, Pune, Maharashtra 411002</div>
-                        <div id="gstinDisplay" class="gstin">GSTIN: 27ABCDE1234F1Z5</div>
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <div class="intro-container">
+                <h1 class="intro-title">The Mysterious Warehouse of <span class="glow">MG Group</span></h1>
+                
+                <div class="intro-text">
+                    <p>Welcome to the enigmatic digital repository of MG Group, a pioneering force in the realm of specialized IT solutions since our inception in 2015. This virtual warehouse serves as the secure vault for our most exclusive tools and utilities, accessible only to verified partners and clients.</p>
+                    
+                    <p>Within these encrypted walls, we safeguard a collection of proprietary generators designed to meet the unique needs of businesses operating in niche markets. Each tool has been meticulously crafted to deliver precision, reliability, and discretion.</p>
+                    
+                    <p>The Mysterious Warehouse is protected by our proprietary ShadowSync™ encryption protocol, ensuring that only authorized personnel can access its valuable contents. All activities within the warehouse are monitored and recorded to maintain the highest level of security.</p>
+                </div>
+                
+                <div class="history-timeline">
+                    <h2 class="intro-title" style="font-size: 2rem;">MG Group: A Legacy of Innovation</h2>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-year">2015 - Foundation</div>
+                        <p>MG Group was founded by a team of cybersecurity experts and software engineers who recognized the need for specialized IT tools in emerging markets. The company began as a boutique development studio in Singapore.</p>
                     </div>
                     
-                    <div class="receipt-info">
-                        <div>Receipt No: <span id="receiptNumberDisplay">RCT-2023-8765</span></div>
-                        <div>Date: <span id="transactionDateDisplay">Oct 12, 2023, 14:35</span></div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2017 - First Breakthrough</div>
+                        <p>Launched the revolutionary "StealthLedger" financial documentation system, which quickly became the industry standard for discrete financial operations in Southeast Asia.</p>
                     </div>
                     
-                    <div class="receipt-info">
-                        <div>Cashier: <span id="cashierNameDisplay">Rajesh Kumar</span></div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2019 - Expansion</div>
+                        <p>Opened regional offices in Zurich, Dubai, and Hong Kong. Developed the proprietary "ShadowSync" encryption protocol that now secures all MG Group products.</p>
                     </div>
                     
-                    <table class="items-table">
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th>Qty</th>
-                                <th class="align-right">Price</th>
-                                <th class="align-right" id="totalColumnHeader">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="itemsList">
-                            <tr>
-                                <td>Britannia Marie Gold Biscuits</td>
-                                <td>1</td>
-                                <td class="align-right">₹30.00</td>
-                                <td class="align-right">₹30.00</td>
-                            </tr>
-                            <tr>
-                                <td>Parle-G Glucose Biscuits</td>
-                                <td>1</td>
-                                <td class="align-right">₹10.00</td>
-                                <td class="align-right">₹10.00</td>
-                            </tr>
-                            <tr>
-                                <td>Coca-Cola 750ml</td>
-                                <td>1</td>
-                                <td class="align-right">₹45.00</td>
-                                <td class="align-right">₹45.00</td>
-                            </tr>
-                            <tr>
-                                <td>Maggi Noodles 70g</td>
-                                <td>1</td>
-                                <td class="align-right">₹12.00</td>
-                                <td class="align-right">₹12.00</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <div class="tax-details">
-                        <div>CGST (9%): ₹<span id="cgstAmount">40.50</span></div>
-                        <div>SGST (9%): ₹<span id="sgstAmount">40.50</span></div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2021 - The Warehouse Concept</div>
+                        <p>Introduced the "Mysterious Warehouse" digital platform, providing clients with secure access to specialized tools through a unique authentication system.</p>
                     </div>
                     
-                    <div class="total-amount highlight">Total: ₹<span id="totalAmount">500.00</span></div>
-                    
-                    <div class="payment-details">
-                        Payment Method: <span id="paymentMethod">Credit Card</span><br>
-                        <span id="paymentDetails">Card Last 4: ****3357</span>
-                        <div class="payment-success" id="paymentStatusDisplay">Payment Successful</div>
-                    </div>
-                    
-                    <div class="barcode-container" id="barcodeContainer">
-                        <svg id="barcode" class="barcode"></svg>
-                    </div>
-                    
-                    <div class="thank-you" id="welcomeMessageDisplay">
-                        Thank you for your patronage! Please visit again.
+                    <div class="timeline-item">
+                        <div class="timeline-year">2023 - Present</div>
+                        <p>MG Group now serves over 1,200 enterprise clients worldwide with a suite of 17 specialized tools. Our commitment to innovation and security remains the cornerstone of our operations.</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
+    
+    <!-- Footer -->
+    <footer>
+        <p>MG Group &copy; 2015-2023 | All systems secured with ShadowSync™ encryption</p>
+        <p style="margin-top: 8px; font-size: 0.8rem; color: #666;">Access to premium tools requires valid activation</p>
+    </footer>
+    
+    <!-- Activation Modal -->
+    <div class="modal-overlay" id="activationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fas fa-lock"></i> Activate Premium Tools</h3>
+                <button class="close-btn" id="closeActivationModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label class="input-label">Enter 16-Digit Activation Code:</label>
+                    <input type="text" class="activation-input" id="activationCode" placeholder="XXXXXXXXXXXXXXXX" maxlength="16">
+                </div>
+                <button class="submit-btn" id="submitActivation">Activate Tools</button>
+                <div class="message" id="activationMessage"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tool Modals -->
+    <div class="modal-overlay" id="toolModal">
+        <div class="modal-content tool-modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="toolModalTitle">Tool Preview</h3>
+                <button class="close-btn" id="closeToolModal">&times;</button>
+            </div>
+            <iframe class="tool-iframe" id="toolIframe" src=""></iframe>
+        </div>
+    </div>
+    
     <script>
-        // Store data arrays
-        const cities = ["Pune", "Ahmedabad", "Gurgaon", "Mumbai"];
-        const storeNames = {
-            Pune: [
-                "Pune Supermarket", "Maharashtra Grocers", "Laxmi Suppliers", 
-                "Shivaji Market", "Sai Superstore", "Kothrud Groceries", 
-                "Deccan Food Mall", "Prabhat Grocery", "MG Road Supermarket", 
-                "Bibwewadi Market", "FC Road Superstore", "Aundh Grocery Center", 
-                "Baner Food Bazaar", "Wakad Supermarket", "Koregaon Park Supermarket"
-            ],
-            Ahmedabad: [
-                "Ahmedabad Grocery Center", "Gujarat Supermarket", "Sabarmati Market", 
-                "Law Garden Grocers", "Manek Chowk Superstore", "Sarkhej Food Mall", 
-                "Vastrapur Supermarket", "Navrangpura Grocery", "Gota Food Bazaar", 
-                "Chandkheda Market", "Bopal Grocers", "Naranpura Supermarket", 
-                "Thaltej Grocery Center", "Satellite Market", "Ambawadi Supermarket"
-            ],
-            Gurgaon: [
-                "Gurgaon Supermarket", "Haryana Grocers", "Sector 14 Market", 
-                "MG Road Superstore", "Sohna Road Food Mall", "Sector 23 Grocery", 
-                "DLF Phase Supermarket", "Cyber City Superstore", "Sector 45 Grocers", 
-                "Sushant Lok Food Bazaar", "Palam Vihar Market", "Sector 56 Supermarket", 
-                "South City Grocers", "Sector 47 Food Center", "Udyog Vihar Market"
-            ],
-            Mumbai: [
-                "Mumbai Supermarket", "Maharashtra Grocers", "Colaba Market", 
-                "Bandra Superstore", "Andheri Food Mall", "Dadar Grocery", 
-                "Borivali Supermarket", "Churchgate Superstore", "Juhu Grocers", 
-                "Powai Food Bazaar", "Malad Market", "Goregaon Supermarket", 
-                "Thane Grocery Center", "Vashi Market", "Kandivali Supermarket"
-            ]
-        };
+        // DOM Elements
+        const activateBtn = document.getElementById('activateBtn');
+        const activationModal = document.getElementById('activationModal');
+        const closeActivationModal = document.getElementById('closeActivationModal');
+        const activationCodeInput = document.getElementById('activationCode');
+        const submitActivation = document.getElementById('submitActivation');
+        const activationMessage = document.getElementById('activationMessage');
         
-        const streetNames = [
-            "MG Road", "Laxmi Road", "Station Road", "Gandhi Road", "Nehru Street",
-            "Market Road", "Main Street", "Park Street", "Church Road", "Temple Street",
-            "School Lane", "College Road", "Hospital Road", "Bus Stand Road", "Railway Station Road"
-        ];
+        const toolModal = document.getElementById('toolModal');
+        const closeToolModal = document.getElementById('closeToolModal');
+        const toolIframe = document.getElementById('toolIframe');
+        const toolModalTitle = document.getElementById('toolModalTitle');
         
-        const foodItems = [
-            {name: "Britannia Marie Gold Biscuits", price: 30},
-            {name: "Parle-G Glucose Biscuits", price: 10},
-            {name: "Sunfeast Dark Fantasy", price: 110},
-            {name: "Unibic Choco Cookies", price: 95},
-            {name: "Oreo Chocolate Sandwich", price: 35},
-            {name: "Good Day Butter Biscuits", price: 25},
-            {name: "Hide & Seek Chocolate Cookies", price: 40},
-            {name: "Bourbon Chocolate Cream", price: 20},
-            {name: "Tiger Krispy Cream Biscuits", price: 30},
-            {name: "Jim Jam Orange Cream", price: 45}
-        ];
+        // Tool elements
+        const restaurantTool = document.getElementById('restaurantTool');
+        const supermarketTool = document.getElementById('supermarketTool');
+        const hotelTool = document.getElementById('hotelTool');
+        const vpnTool = document.getElementById('vpnTool');
         
-        const drinkItems = [
-            {name: "Coca-Cola 750ml", price: 45},
-            {name: "Pepsi 750ml", price: 40},
-            {name: "Thums Up 750ml", price: 45},
-            {name: "Sprite 750ml", price: 40},
-            {name: "Fanta 750ml", price: 40},
-            {name: "Maaza Mango 1L", price: 60},
-            {name: "Slice Mango 1L", price: 55},
-            {name: "Appy Fizz 750ml", price: 65},
-            {name: "7Up 750ml", price: 40},
-            {name: "Mirinda Orange 750ml", price: 40}
-        ];
-        
-        const snackItems = [
-            {name: "Maggi Noodles 70g", price: 12},
-            {name: "Top Ramen Noodles", price: 15},
-            {name: "Yippee Noodles", price: 14},
-            {name: "Lays Potato Chips", price: 20},
-            {name: "Kurkure Masala Munch", price: 20},
-            {name: "Bingo Mad Angles", price: 20},
-            {name: "Uncle Chipps", price: 20},
-            {name: "Parle Monaco Classic", price: 10},
-            {name: "Haldiram's Aloo Bhujia", price: 45},
-            {name: "Haldiram's Namkeen", price: 50}
-        ];
-        
-        const cashierNames = [
-            "Rajesh Kumar", "Priya Sharma", "Amit Patel", "Sneha Singh", 
-            "Vikram Desai", "Anjali Gupta", "Sanjay Mehta", "Neha Joshi", 
-            "Rahul Shah", "Divya Reddy", "Karan Malhotra", "Pooja Iyer", 
-            "Arjun Chowdhury", "Deepika Nair", "Rohit Verma"
-        ];
-        
-        // Global items array
-        let itemsData = [];
-        
-        // Initialize receipt
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set current date and time
-            const now = new Date();
-            document.getElementById('transactionDate').value = formatDateTimeLocal(now);
-            
-            // Generate initial random values
-            randomStoreName();
-            randomAddress();
-            randomReceiptNumber();
-            randomCashierName();
-            randomGSTIN();
-            
-            // Generate initial items
-            generateRandomItems();
-            
-            // Set payment type listener
-            document.querySelectorAll('input[name="paymentType"]').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if(this.value === 'cash') {
-                        document.getElementById('cashPayment').style.display = 'block';
-                        document.getElementById('cardPayment').style.display = 'none';
-                    } else {
-                        document.getElementById('cashPayment').style.display = 'none';
-                        document.getElementById('cardPayment').style.display = 'block';
-                    }
-                    updateReceipt();
-                });
-            });
-            
-            // Paper size selection listener
-            document.getElementById('paperSize').addEventListener('change', function() {
-                updateReceipt();
-            });
-            
-            // Logo upload handling
-            document.getElementById('logoUpload').addEventListener('change', function(e) {
-                if (e.target.files && e.target.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        document.getElementById('storeLogo').src = event.target.result;
-                        document.getElementById('storeLogo').style.display = 'block';
-                    }
-                    reader.readAsDataURL(e.target.files[0]);
-                }
-            });
-            
-            // Barcode toggle
-            document.getElementById('barcodeToggle').addEventListener('change', function() {
-                updateReceipt();
-            });
-            
-            // Font size selection
-            document.getElementById('fontSize').addEventListener('change', function() {
-                updateReceipt();
-            });
-            
-            // Show total column toggle
-            document.getElementById('showTotalColumn').addEventListener('change', function() {
-                updateReceipt();
-            });
-            
-            // Payment status selection
-            document.getElementById('paymentStatus').addEventListener('change', function() {
-                document.getElementById('paymentStatusDisplay').textContent = this.value;
-            });
-            
-            // Welcome message selection
-            document.getElementById('welcomeMessage').addEventListener('change', function() {
-                document.getElementById('welcomeMessageDisplay').textContent = this.value;
-            });
-            
-            // Receipt style selection
-            document.getElementById('receiptStyle').addEventListener('change', function() {
-                updateReceipt();
-            });
-            
-            // Initial receipt update
-            updateReceipt();
+        // Open activation modal
+        activateBtn.addEventListener('click', () => {
+            activationModal.classList.add('active');
+            activationCodeInput.focus();
         });
         
-        // Helper functions
-        function formatDateTimeLocal(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            return `${year}-${month}-${day}T${hours}:${minutes}`;
-        }
+        // Close activation modal
+        closeActivationModal.addEventListener('click', () => {
+            activationModal.classList.remove('active');
+            activationMessage.textContent = '';
+            activationMessage.className = 'message';
+            activationCodeInput.value = '';
+        });
         
-        function formatDateDisplay(dateString) {
-            const date = new Date(dateString);
-            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
-            return date.toLocaleString('en-IN', options);
-        }
+        // Close tool modal
+        closeToolModal.addEventListener('click', () => {
+            toolModal.classList.remove('active');
+            toolIframe.src = '';
+        });
         
-        function generateGSTIN() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let result = '27';
-            for (let i = 0; i < 10; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            result += '1Z5';
-            return result;
-        }
-        
-        function getRandomInt(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
-        
-        // Store information functions
-        function randomStoreName() {
-            const city = document.getElementById('storeCity').value;
-            const names = storeNames[city];
-            const randomName = names[Math.floor(Math.random() * names.length)];
-            document.getElementById('storeName').value = randomName;
-            updateReceipt();
-        }
-        
-        function randomAddress() {
-            const city = document.getElementById('storeCity').value;
-            const street = streetNames[Math.floor(Math.random() * streetNames.length)];
-            const building = getRandomInt(1, 200);
-            const area = `${city} ${getRandomInt(1, 5)}${String.fromCharCode(65 + Math.floor(Math.random() * 6))}`;
-            const pin = getRandomInt(400000, 499999);
+        // Validate activation code
+        submitActivation.addEventListener('click', () => {
+            const code = activationCodeInput.value.trim().toUpperCase();
             
-            const address = `Shop ${building}, ${street}, ${area}, ${pin}`;
-            document.getElementById('storeAddress').value = address;
-            updateReceipt();
-        }
-        
-        function randomGSTIN() {
-            document.getElementById('gstin').value = generateGSTIN();
-            updateReceipt();
-        }
-        
-        function randomLogo() {
-            const logos = [
-                'https://cdn-icons-png.flaticon.com/512/3698/3698156.png',
-                'https://cdn-icons-png.flaticon.com/512/1261/1261166.png',
-                'https://cdn-icons-png.flaticon.com/512/1261/1261165.png',
-                'https://cdn-icons-png.flaticon.com/512/1261/1261183.png',
-                'https://cdn-icons-png.flaticon.com/512/1261/1261163.png'
-            ];
-            const randomLogo = logos[Math.floor(Math.random() * logos.length)];
-            document.getElementById('storeLogo').src = randomLogo;
-            document.getElementById('storeLogo').style.display = 'block';
-        }
-        
-        function removeLogo() {
-            document.getElementById('storeLogo').src = '';
-            document.getElementById('storeLogo').style.display = 'none';
-        }
-        
-        // Receipt functions
-        function randomReceiptNumber() {
-            const year = new Date().getFullYear();
-            const num = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('receiptNumber').value = `RCT-${year}-${num}`;
-            updateReceipt();
-        }
-        
-        function randomRecentTime() {
-            const now = new Date();
-            const randomHours = Math.floor(Math.random() * 72); // Up to 3 days ago
-            const recentDate = new Date(now - randomHours * 60 * 60 * 1000);
-            document.getElementById('transactionDate').value = formatDateTimeLocal(recentDate);
-            updateReceipt();
-        }
-        
-        function randomCashierName() {
-            const randomName = cashierNames[Math.floor(Math.random() * cashierNames.length)];
-            document.getElementById('cashierName').value = randomName;
-            updateReceipt();
-        }
-        
-        function randomizeAll() {
-            randomStoreName();
-            randomAddress();
-            randomGSTIN();
-            randomReceiptNumber();
-            randomRecentTime();
-            randomCashierName();
-            randomLogo();
-            generateRandomItems();
-            updateReceipt();
-        }
-        
-        function generateRandomItems() {
-            const foodCount = parseInt(document.getElementById('foodItems').value) || 0;
-            const drinkCount = parseInt(document.getElementById('drinkItems').value) || 0;
-            const snackCount = parseInt(document.getElementById('snackItems').value) || 0;
-            const targetAmount = parseFloat(document.getElementById('targetAmount').value) || 500;
-            
-            itemsData = [];
-            let currentTotal = 0;
-            
-            // Generate food items
-            for (let i = 0; i < foodCount; i++) {
-                const randomItem = {...foodItems[Math.floor(Math.random() * foodItems.length)]};
-                randomItem.qty = 1;
-                itemsData.push(randomItem);
-                currentTotal += randomItem.price;
+            // Special hidden activation code
+            if (code === 'MGJK199304210054') {
+                activateTools();
+                activationMessage.textContent = 'Activation successful! Premium tools unlocked.';
+                activationMessage.className = 'message success';
+                activateBtn.classList.remove('pulse');
+                setTimeout(() => {
+                    activationModal.classList.remove('active');
+                }, 2000);
+                return;
             }
             
-            // Generate drink items
-            for (let i = 0; i < drinkCount; i++) {
-                const randomItem = {...drinkItems[Math.floor(Math.random() * drinkItems.length)]};
-                randomItem.qty = 1;
-                itemsData.push(randomItem);
-                currentTotal += randomItem.price;
+            // Regular validation
+            if (code.length !== 16) {
+                activationMessage.textContent = 'Error: Activation code must be 16 characters';
+                activationMessage.className = 'message error';
+                return;
             }
             
-            // Generate snack items
-            for (let i = 0; i < snackCount; i++) {
-                const randomItem = {...snackItems[Math.floor(Math.random() * snackItems.length)]};
-                randomItem.qty = 1;
-                itemsData.push(randomItem);
-                currentTotal += randomItem.price;
+            const prefix = code.substring(0, 4);
+            const middle = code.substring(4, 12);
+            const suffix = code.substring(12, 16);
+            
+            const validPrefixes = ['PYMG', 'KKMG', 'DHMG'];
+            const validMiddle = '19951028';
+            
+            if (!validPrefixes.includes(prefix)) {
+                activationMessage.textContent = 'Error: Invalid prefix in activation code';
+                activationMessage.className = 'message error';
+                return;
             }
             
-            // Adjust prices to reach target (within 12% range)
-            const targetVariance = 0.12;
-            const minTarget = targetAmount * (1 - targetVariance);
-            const maxTarget = targetAmount * (1 + targetVariance);
-            
-            if (itemsData.length > 0 && (currentTotal < minTarget || currentTotal > maxTarget)) {
-                const adjustmentFactor = targetAmount / currentTotal;
-                itemsData.forEach(item => {
-                    item.price = Math.round(item.price * adjustmentFactor * 100) / 100;
-                });
+            if (middle !== validMiddle) {
+                activationMessage.textContent = 'Error: Invalid middle section in activation code';
+                activationMessage.className = 'message error';
+                return;
             }
             
-            // Render item editor
-            renderItemEditor();
-            updateReceipt();
-        }
+            const suffixNumber = parseInt(suffix);
+            if (isNaN(suffixNumber)) {
+                activationMessage.textContent = 'Error: Invalid suffix in activation code';
+                activationMessage.className = 'message error';
+                return;
+            }
+            
+            if (suffixNumber % 13 !== 0) {
+                activationMessage.textContent = 'Error: Suffix must be a multiple of 13';
+                activationMessage.className = 'message error';
+                return;
+            }
+            
+            // If all validations pass
+            activateTools();
+            activationMessage.textContent = 'Activation successful! Premium tools unlocked.';
+            activationMessage.className = 'message success';
+            activateBtn.classList.remove('pulse');
+            
+            setTimeout(() => {
+                activationModal.classList.remove('active');
+                activationMessage.textContent = '';
+                activationMessage.className = 'message';
+                activationCodeInput.value = '';
+            }, 2000);
+        });
         
-        function renderItemEditor() {
-            const container = document.getElementById('itemsEditorContainer');
-            container.innerHTML = '';
-            
-            let subtotal = 0;
-            
-            itemsData.forEach((item, index) => {
-                const itemTotal = item.qty * item.price;
-                subtotal += itemTotal;
-                
-                const row = document.createElement('div');
-                row.className = 'item-row';
-                row.innerHTML = `
-                    <input type="text" class="item-name" value="${item.name}" placeholder="Item name" data-index="${index}">
-                    <input type="number" class="item-qty" value="${item.qty}" min="1" placeholder="Qty" data-index="${index}">
-                    <input type="number" class="item-price" value="${item.price.toFixed(2)}" min="0" step="0.01" placeholder="Price" data-index="${index}">
-                    <div class="item-total">₹${itemTotal.toFixed(2)}</div>
-                    <button class="delete-item" data-index="${index}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                `;
-                container.appendChild(row);
+        // Activate tools function
+        function activateTools() {
+            restaurantTool.classList.remove('disabled');
+            restaurantTool.classList.add('enabled');
+            restaurantTool.addEventListener('click', (e) => {
+                e.preventDefault();
+                openTool('A.html', 'Restaurant Receipt Generator');
             });
             
-            // Update subtotal display
-            document.getElementById('subtotalAmount').textContent = subtotal.toFixed(2);
-            
-            // Add event listeners
-            document.querySelectorAll('.item-name, .item-qty, .item-price').forEach(input => {
-                input.addEventListener('input', function() {
-                    const index = parseInt(this.getAttribute('data-index'));
-                    if (this.classList.contains('item-name')) {
-                        itemsData[index].name = this.value;
-                    } else if (this.classList.contains('item-qty')) {
-                        itemsData[index].qty = parseInt(this.value) || 1;
-                    } else if (this.classList.contains('item-price')) {
-                        itemsData[index].price = parseFloat(this.value) || 0;
-                    }
-                    
-                    // Update this row total
-                    const row = this.closest('.item-row');
-                    const totalDiv = row.querySelector('.item-total');
-                    const itemTotal = itemsData[index].qty * itemsData[index].price;
-                    totalDiv.textContent = `₹${itemTotal.toFixed(2)}`;
-                    
-                    // Update subtotal
-                    updateSubtotal();
-                    updateReceipt();
-                });
+            supermarketTool.classList.remove('disabled');
+            supermarketTool.classList.add('enabled');
+            supermarketTool.addEventListener('click', (e) => {
+                e.preventDefault();
+                openTool('B.html', 'Supermarket Receipt Generator');
             });
             
-            document.querySelectorAll('.delete-item').forEach(button => {
-                button.addEventListener('click', function() {
-                    const index = parseInt(this.getAttribute('data-index'));
-                    itemsData.splice(index, 1);
-                    renderItemEditor();
-                    updateReceipt();
-                });
+            hotelTool.classList.remove('disabled');
+            hotelTool.classList.add('enabled');
+            hotelTool.addEventListener('click', (e) => {
+                e.preventDefault();
+                openTool('C.html', 'Hotel Invoice Generator');
+            });
+            
+            vpnTool.classList.remove('disabled');
+            vpnTool.classList.add('enabled');
+            vpnTool.addEventListener('click', (e) => {
+                e.preventDefault();
+                openTool('D.html', 'VPN Invoice Generator');
             });
         }
         
-        function updateSubtotal() {
-            let subtotal = 0;
-            itemsData.forEach(item => {
-                subtotal += item.qty * item.price;
-            });
-            document.getElementById('subtotalAmount').textContent = subtotal.toFixed(2);
+        // Open tool in modal
+        function openTool(file, title) {
+            toolModalTitle.textContent = title;
+            toolIframe.src = file;
+            toolModal.classList.add('active');
         }
         
-        function addNewItem() {
-            itemsData.push({
-                name: "New Item",
-                qty: 1,
-                price: 0
-            });
-            renderItemEditor();
-            updateReceipt();
-        }
-        
-        function updateReceipt() {
-            // Get paper size
-            const paperSize = document.getElementById('paperSize').value;
-            const receipt = document.getElementById('receipt');
-            
-            // Adjust width based on paper size
-            if (paperSize === '58mm') {
-                receipt.style.width = '240px';
-                receipt.style.padding = '12px';
-            } else {
-                receipt.style.width = '350px';
-                receipt.style.padding = '20px';
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === activationModal) {
+                activationModal.classList.remove('active');
             }
-            
-            // Apply receipt style
-            const receiptStyle = document.getElementById('receiptStyle').value;
-            receipt.className = 'receipt ' + receiptStyle;
-            
-            // Apply font size
-            const fontSizeValue = document.getElementById('fontSize').value + 'px';
-            receipt.style.fontSize = fontSizeValue;
-            
-            // Adjust total column display based on user selection
-            const showTotalColumn = document.getElementById('showTotalColumn').checked;
-            const totalColumnHeader = document.getElementById('totalColumnHeader');
-            const totalColumns = document.querySelectorAll('.items-table .align-right:last-child');
-            
-            if (showTotalColumn) {
-                totalColumnHeader.style.display = 'table-cell';
-                totalColumns.forEach(col => col.style.display = 'table-cell');
-            } else {
-                totalColumnHeader.style.display = 'none';
-                totalColumns.forEach(col => col.style.display = 'none');
+            if (e.target === toolModal) {
+                toolModal.classList.remove('active');
+                toolIframe.src = '';
             }
-            
-            // Update store information
-            document.getElementById('storeNameDisplay').textContent = document.getElementById('storeName').value;
-            document.getElementById('storeAddressDisplay').textContent = document.getElementById('storeAddress').value;
-            document.getElementById('gstinDisplay').textContent = 'GSTIN: ' + document.getElementById('gstin').value;
-            
-            // Update receipt information
-            document.getElementById('receiptNumberDisplay').textContent = document.getElementById('receiptNumber').value;
-            document.getElementById('transactionDateDisplay').textContent = formatDateDisplay(document.getElementById('transactionDate').value);
-            document.getElementById('cashierNameDisplay').textContent = document.getElementById('cashierName').value;
-            
-            // Update items list
-            const itemsList = document.getElementById('itemsList');
-            itemsList.innerHTML = '';
-            
-            let subtotal = 0;
-            
-            itemsData.forEach(item => {
-                const itemTotal = item.price * item.qty;
-                subtotal += itemTotal;
-                
-                const row = document.createElement('tr');
-                if (showTotalColumn) {
-                    row.innerHTML = `
-                        <td>${item.name}</td>
-                        <td>${item.qty}</td>
-                        <td class="align-right">₹${item.price.toFixed(2)}</td>
-                        <td class="align-right">₹${itemTotal.toFixed(2)}</td>
-                    `;
-                } else {
-                    row.innerHTML = `
-                        <td>${item.name}</td>
-                        <td>${item.qty}</td>
-                        <td class="align-right">₹${item.price.toFixed(2)}</td>
-                    `;
-                }
-                itemsList.appendChild(row);
-            });
-            
-            // Calculate taxes
-            const cgstRate = parseFloat(document.getElementById('cgstRate').value) || 9;
-            const sgstRate = parseFloat(document.getElementById('sgstRate').value) || 9;
-            
-            const cgstAmount = (subtotal * cgstRate) / 100;
-            const sgstAmount = (subtotal * sgstRate) / 100;
-            const totalAmount = subtotal + cgstAmount + sgstAmount;
-            
-            document.getElementById('cgstAmount').textContent = cgstAmount.toFixed(2);
-            document.getElementById('sgstAmount').textContent = sgstAmount.toFixed(2);
-            document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
-            
-            // Update payment information
-            const paymentType = document.querySelector('input[name="paymentType"]:checked').value;
-            document.getElementById('paymentMethod').textContent = paymentType === 'cash' ? 'Cash' : 'Credit Card';
-            
-            let paymentDetails = '';
-            if (paymentType === 'cash') {
-                const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
-                const change = cashAmount - totalAmount;
-                
-                if (change < 0) {
-                    document.getElementById('cashError').style.display = 'block';
-                    paymentDetails = `Cash Received: ₹${cashAmount.toFixed(2)}, Change: <span style="color:red">₹${change.toFixed(2)}</span>`;
-                } else {
-                    document.getElementById('cashError').style.display = 'none';
-                    paymentDetails = `Cash Received: ₹${cashAmount.toFixed(2)}, Change: ₹${change.toFixed(2)}`;
-                }
-            } else {
-                const cardNumber = document.getElementById('cardNumber').value || '3357';
-                paymentDetails = `Card Last 4: ****${cardNumber}`;
-            }
-            
-            document.getElementById('paymentDetails').innerHTML = paymentDetails;
-            
-            // Update payment status
-            document.getElementById('paymentStatusDisplay').textContent = document.getElementById('paymentStatus').value;
-            
-            // Update welcome message
-            document.getElementById('welcomeMessageDisplay').textContent = document.getElementById('welcomeMessage').value;
-            
-            // Generate barcode (if enabled)
-            const barcodeToggle = document.getElementById('barcodeToggle').checked;
-            if (barcodeToggle) {
-                document.getElementById('barcodeContainer').style.display = 'block';
-                JsBarcode("#barcode", document.getElementById('receiptNumber').value, {
-                    format: "CODE128",
-                    displayValue: true,
-                    fontSize: 8,
-                    height: 25,
-                    width: paperSize === '58mm' ? 1 : 1.2,
-                    margin: 0
-                });
-            } else {
-                document.getElementById('barcodeContainer').style.display = 'none';
-            }
-        }
+        });
         
-        // Download functions
-        function getCanvasScale() {
-            const resolution = document.getElementById('resolution').value;
-            return parseInt(resolution);
-        }
-        
-        function downloadPDF() {
-            const receipt = document.getElementById('receipt');
-            const scale = getCanvasScale();
-            
-            html2canvas(receipt, {
-                scale: scale,
-                backgroundColor: '#FFFFFF'
-            }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jspdf.jsPDF({
-                    orientation: 'portrait',
-                    unit: 'px',
-                    format: [canvas.width, canvas.height]
-                });
-                
-                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                pdf.save('supermarket_receipt.pdf');
-            });
-        }
-        
-        function downloadJPG() {
-            const receipt = document.getElementById('receipt');
-            const scale = getCanvasScale();
-            
-            html2canvas(receipt, {
-                scale: scale,
-                backgroundColor: '#FFFFFF'
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'supermarket_receipt.jpg';
-                link.href = canvas.toDataURL('image/jpeg', 0.9);
-                link.click();
-            });
-        }
-        
-        function downloadPNG() {
-            const receipt = document.getElementById('receipt');
-            const scale = getCanvasScale();
-            
-            html2canvas(receipt, {
-                scale: scale,
-                backgroundColor: '#FFFFFF'
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'supermarket_receipt.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            });
-        }
-        
-        function printReceipt() {
-            const receipt = document.getElementById('receipt');
-            const printWindow = window.open('', '_blank');
-            
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Print Receipt</title>
-                    <style>
-                        body {
-                            margin: 0;
-                            padding: 10px;
-                            background: white;
-                            font-family: 'Courier New', Courier, monospace;
-                        }
-                        .receipt {
-                            width: ${receipt.offsetWidth}px;
-                            background: white;
-                            padding: ${receipt.style.padding};
-                            font-size: ${receipt.style.fontSize};
-                            line-height: 1.4;
-                        }
-                        @media print {
-                            body {
-                                padding: 0;
-                            }
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${receipt.outerHTML}
-                    <script>
-                        window.onload = function() {
-                            window.print();
-                            setTimeout(function() {
-                                window.close();
-                            }, 1000);
-                        }
-                    <\/script>
-                </body>
-                </html>
-            `);
-            
-            printWindow.document.close();
-        }
+        // Sample valid code for testing: PYMG199510280000 (since 0 is multiple of 13)
+        // But note: the hidden code is MGJK199304210054
     </script>
 </body>
 </html>
